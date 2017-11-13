@@ -5,7 +5,7 @@
 :- op(880, xfy, [<=>]). % Equivalence
 
 % ------------------------ satisfies(I,F) predicate ----------------------------
-% satisfies(I,F) hols if and only if interpretation I satisfies the propositional logic formula F (i.e I makes F true at all times).
+% satisfies(I,F) holds if and only if interpretation I satisfies the propositional logic formula F (i.e I makes F true at all times).
 
 satisfies([X], X).  % base-case: if X is the only element in the list.
 satisfies(I, X) :-
