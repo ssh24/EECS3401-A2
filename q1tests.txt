@@ -1,0 +1,120 @@
+----------- Test cases on "satisfies" predicate -----------
+?- satisfies([p, q], (-p v q) & p).
+true .
+
+?- satisfies([p], (-p v q) & p).
+false.
+
+?- satisfies([], p).
+false.
+
+?- satisfies([p, q], -(p => -q)).
+true .
+
+?- satisfies([r], - -p v q).
+false.
+
+?- satisfies([p, q], (p & (q v s))).
+true .
+
+?- satisfies([p, q], p <=> q).
+true .
+
+?- satisfies([p, q], -(p & (q v p))).
+false.
+
+?- satisfies([p, q, r], (p & r) & -q).
+false.
+
+?- satisfies([p, q, r], (p & r) & (-q <=> r)).
+false.
+
+----------- Test cases on "elimImpl" predicate -----------
+?- elimImpl((-p => q) & (r <=> -s), R).
+R = ((- -p v q)& (-r v -s)& (- -s v r)).
+
+?- elimImpl(-(p => q), R).
+R = - (-p v q).
+
+?- elimImpl(p v (q => p), p v (-q v p)).
+true.
+
+?- elimImpl(q & (r <=> s), q & (-r v s) & (-s v r)).
+true.
+
+?- elimImpl(-q => -(r v (p <=> s)), R).
+R = (- -q v - (r v (-p v s)& (-s v p))).
+
+?- elimImpl(-p <=> -s, (- -p v s) v (- -s v p)).
+false.
+
+?- elimImpl(-(-p & q v (r & (s <=> t))), R).
+R = - (-p&q v r& (-s v t)& (-t v s)).
+
+?- elimImpl(-p, R).
+R = -p.
+
+?- elimImpl((q => r) & (r => q) & (q <=> r), R).
+R = ((-q v r)& (-r v q)& (-q v r)& (-r v q)).
+
+----------- Test cases on "nnf" predicate -----------
+?- nnf(-(p & -q), R).
+R = (-p v q) .
+
+?- nnf(-(p & -(q v -r)), R).
+R = (-p v q v -r) .
+
+?- nnf(-(-q & -(r v -(-p & s))), R).
+R = (q v r v p v -s) .
+
+?- nnf(-(p v -q), -p & q).
+true .
+
+?- nnf(-(-(-p & (s v q))), -p & (s v q)).
+true .
+
+?- nnf(-(-a v (b & c) & c) & -d, R).
+R = ((a& ((-b v -c)v-c))& -d) .
+
+?- nnf(-(a v b), -a & b).
+false.
+
+?- nnf(-(a & b), -a v -b).
+true.
+
+?- nnf(-(a v -c), -a & - -c).
+false.
+
+?- nnf(-p & -(q v -(r & t)), R).
+R = (-p& -q&r&t) .
+
+----------- Test cases on "cnf" predicate -----------
+?- cnf((p & -q) v r, R).
+R = ((p v r)& (-q v r)) .
+
+?- cnf((p & -q) v (r & -s), R).
+R = (((p v r)& (-q v r))& (p v -s)& (-q v -s)) .
+
+?- cnf(p & (q v (r & s)), R).
+R = (p& (q v r)& (q v s)) .
+
+?- cnf(-(p v q), R).
+R = (-p& -q).
+
+?- cnf((p & q) v r, (p v r) & (q v r)).
+true.
+
+?- cnf(p & (q v (r & s)), R).
+R = (p& (q v r)& (q v s)) .
+
+?- cnf((p & q) v (r v q), (p v r v q) v (q v r v q)).
+false.
+
+?- cnf(-(p & q) v (-r & s), R).
+R = (((-p v -q)v-r)& ((-p v -q)v s)) .
+
+?- cnf(a & b, a & b).
+true.
+
+?- cnf(-(p v (q v r)), R).
+R = (-p& -q& -r) .
