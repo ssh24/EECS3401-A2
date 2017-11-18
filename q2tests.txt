@@ -1,0 +1,318 @@
+----------- Test cases on "run" predicate -----------
+# definition of oneUserSystem is in examples/deadlock.pl file
+?- run(oneUserSystem, R).
+R = [ (user1$lock1s0| lock2s0| iterDoSomething), acquireLock1, (acquireLock2>doSomething>releaseLock2>releaseLock1$lock1s1| lock2s0| iterDoSomething), acquireLock2, (doSomething>releaseLock2>releaseLock1$lock1s1| lock2s1| iterDoSomething), doSomething, (releaseLock2>releaseLock1$lock1s1| ...| ...), releaseLock2, (... $ ...)|...] ;
+false.
+
+# definition of deadlockingSystem is in examples/deadlock.pl file
+?- run(deadlockingSystem, R).
+R = [ (user1| user2$lock1s0| lock2s0| iterDoSomething), acquireLock1, (acquireLock2>doSomething>releaseLock2>releaseLock1| user2$lock1s1| lock2s0| iterDoSomething), acquireLock2, (doSomething>releaseLock2>releaseLock1| user2$lock1s1| lock2s1| iterDoSomething), doSomething, (... > ...| user2$lock1s1| ...| ...), releaseLock2, (... $ ...)|...] ;
+R = [ (user1| user2$lock1s0| lock2s0| iterDoSomething), acquireLock1, (acquireLock2>doSomething>releaseLock2>releaseLock1| user2$lock1s1| lock2s0| iterDoSomething), acquireLock2, (doSomething>releaseLock2>releaseLock1| user2$lock1s1| lock2s1| iterDoSomething), doSomething, (... > ...| user2$lock1s1| ...| ...), releaseLock2, (... $ ...)|...] ;
+R = [ (user1| user2$lock1s0| lock2s0| iterDoSomething), acquireLock2, (user1| acquireLock1>doSomething>releaseLock1>releaseLock2$lock1s0| lock2s1| iterDoSomething), acquireLock1, (user1| doSomething>releaseLock1>releaseLock2$lock1s1| lock2s1| iterDoSomething), doSomething, (user1| ... > ... $ lock1s1| ...| ...), releaseLock1, (... $ ...)|...] ;
+R = [ (user1| user2$lock1s0| lock2s0| iterDoSomething), acquireLock2, (user1| acquireLock1>doSomething>releaseLock1>releaseLock2$lock1s0| lock2s1| iterDoSomething), acquireLock1, (user1| doSomething>releaseLock1>releaseLock2$lock1s1| lock2s1| iterDoSomething), doSomething, (user1| ... > ... $ lock1s1| ...| ...), releaseLock1, (... $ ...)|...] ;
+false.
+
+?- run(a1 > (a2 ? 0), R).
+R = [a1> (a2?0), a1, a2?0] ;
+R = [a1> (a2?0), a1, a2?0, a2, 0] ;
+false.
+
+# definition of loop is in examples/other.pl file
+?- run(loop, R).
+R = [0?a1>loop] ;
+R = [0?a1>loop, a1, 0?a1>loop] ;
+R = [0?a1>loop, a1, 0?a1>loop, a1, 0?a1>loop] ;
+R = [0?a1>loop, a1, 0?a1>loop, a1, 0?a1>loop, a1, 0?a1>loop] ;
+R = [0?a1>loop, a1, 0?a1>loop, a1, 0?a1>loop, a1, 0?a1>loop, a1, ... ? ...] .
+
+?- run(a1 | a2, R).
+R = [ (a1| a2), a2, (a1| 0), a1, (0| 0)] ;
+R = [ (a1| a2), a1, (0| a2), a2, (0| 0)] ;
+false.
+
+?- run(a2 ? a3, R).
+R = [a2?a3, a2, 0] ;
+R = [a2?a3, a3, 0] ;
+false.
+
+?- run((a1 ? a2) $ (a1 ? a3), R).
+R = [ (a1?a2$a1?a3), a1, (0$0)] ;
+false.
+
+# definition of loop3 is in examples/other.pl file
+?- run(loop3, R).
+R = [a1>loop3?0] ;
+R = [a1>loop3?0, a1, a1>loop3?0] ;
+R = [a1>loop3?0, a1, a1>loop3?0, a1, a1>loop3?0] ;
+R = [a1>loop3?0, a1, a1>loop3?0, a1, a1>loop3?0, a1, a1>loop3?0] ;
+R = [a1>loop3?0, a1, a1>loop3?0, a1, a1>loop3?0, a1, a1>loop3?0, a1, ... ? ...] .
+
+?- run(a1 > a2 > a3, R).
+R = [a1>a2>a3, a1, a2>a3, a2, a3, a3, 0].
+
+?- run((a1 > a2) | a3, R).
+R = [ (a1>a2| a3), a3, (a1>a2| 0), a1, (a2| 0), a2, (0| 0)] ;
+R = [ (a1>a2| a3), a1, (a2| a3), a3, (a2| 0), a2, (0| 0)] ;
+R = [ (a1>a2| a3), a1, (a2| a3), a2, (0| a3), a3, (0| 0)] ;
+false.
+
+?- run(a1 $ a2, R).
+false.
+
+?- run(a1 $ a1, R).
+R = [ (a1$a1), a1, (0$0)] ;
+false.
+
+----------- Test cases on "print_run" predicate -----------
+?- run(a1 > a2 > a3, R), print_run(R).
+P1: a1>a2>a3
+A: a1
+P2: a2>a3
+Transition: (a1>a2>a3)-a1- (a2>a3)
+P1: a2>a3
+A: a2
+P2: a3
+Transition: (a2>a3)-a2-a3
+P1: a3
+A: a3
+P2: 0
+Transition: a3-a3-0
+R = [a1>a2>a3, a1, a2>a3, a2, a3, a3, 0] .
+
+?- run((a1 > a2) | a3, R), print_run(R).
+P1: a1>a2|a3
+A: a3
+P2: a1>a2|0
+Transition: (a1>a2|a3)-a3- (a1>a2|0)
+P1: a1>a2|0
+A: a1
+P2: a2|0
+Transition: (a1>a2|0)-a1- (a2|0)
+P1: a2|0
+A: a2
+P2: 0|0
+Transition: (a2|0)-a2- (0|0)
+R = [ (a1>a2| a3), a3, (a1>a2| 0), a1, (a2| 0), a2, (0| 0)] ;
+P1: a2|0
+A: a2
+P2: 0|0
+Transition: (a2|0)-a2- (0|0)
+P1: a1>a2|a3
+A: a1
+P2: a2|a3
+Transition: (a1>a2|a3)-a1- (a2|a3)
+P1: a2|a3
+A: a3
+P2: a2|0
+Transition: (a2|a3)-a3- (a2|0)
+P1: a2|0
+A: a2
+P2: 0|0
+Transition: (a2|0)-a2- (0|0)
+R = [ (a1>a2| a3), a1, (a2| a3), a3, (a2| 0), a2, (0| 0)] ;
+P1: a2|0
+A: a2
+P2: 0|0
+Transition: (a2|0)-a2- (0|0)
+P1: a1>a2|a3
+A: a1
+P2: a2|a3
+Transition: (a1>a2|a3)-a1- (a2|a3)
+P1: a2|a3
+A: a2
+P2: 0|a3
+Transition: (a2|a3)-a2- (0|a3)
+P1: 0|a3
+A: a3
+P2: 0|0
+Transition: (0|a3)-a3- (0|0)
+R = [ (a1>a2| a3), a1, (a2| a3), a2, (0| a3), a3, (0| 0)] ;
+P1: 0|a3
+A: a3
+P2: 0|0
+Transition: (0|a3)-a3- (0|0)
+false.
+
+----------- Test cases on "has_infinite_run" predicate -----------
+?- has_infinite_run(a1 > a2 > a3).
+false.
+
+?- has_infinite_run((a1 > a2) | a3).
+false.
+
+# definition of loop1 is in examples/other.pl file
+?- has_infinite_run(loop1).
+true .
+
+# definition of producerConsumerSyst is in examples/producer-consumer.pl
+?- has_infinite_run(producerConsumerSyst).
+true .
+
+# definition of producer is in examples/producer-consumer.pl
+?- has_infinite_run(producer).
+true .
+
+# definition of consumer is in examples/producer-consumer.pl
+?- has_infinite_run(consumer).
+true .
+
+# definition of faults is in examples/producer-consumer.pl
+?- has_infinite_run(faults).
+false.
+
+# definition of bufferUF is in examples/producer-consumer.pl
+?- has_infinite_run(bufferUF).
+true .
+
+# definition of bufferS0 is in examples/producer-consumer.pl
+?- has_infinite_run(bufferS0).
+true .
+
+# definition of bufferS1 is in examples/producer-consumer.pl
+?- has_infinite_run(bufferS1).
+true .
+
+# definition of bufferS2 is in examples/producer-consumer.pl
+?- has_infinite_run(bufferS2).
+true .
+
+# definition of bufferS3 is in examples/producer-consumer.pl
+?- has_infinite_run(bufferS3).
+true .
+
+# definition of bufferOF is in examples/producer-consumer.pl
+?- has_infinite_run(bufferOF).
+true .
+
+# definition of producerConsumerSystBuggy is in examples/producer-consumer.pl
+?- has_infinite_run(producerConsumerSystBuggy).
+true .
+
+# definition of producerB is in examples/producer-consumer.pl
+?- has_infinite_run(producerB).
+true .
+
+# definition of consumerB is in examples/producer-consumer.pl
+?- has_infinite_run(consumerB).
+true .
+
+# definition of deadlockingSystem is in examples/deadlock.pl
+?- has_infinite_run(deadlockingSystem).
+false.
+
+# definition of deadlockingSystem is in examples/deadlock.pl
+?- has_infinite_run(user1).
+false.
+
+# definition of deadlockingSystem is in examples/deadlock.pl
+?- has_infinite_run(user2).
+false.
+
+# definition of lock1s0 is in examples/deadlock.pl
+?- has_infinite_run(lock1s0).
+true .
+
+# definition of locks1 is in examples/deadlock.pl
+?- has_infinite_run(locks1).
+false.
+
+# definition of lock2s0 is in examples/deadlock.pl
+?- has_infinite_run(lock2s0).
+true .
+
+# definition of lock2s1 is in examples/deadlock.pl
+?- has_infinite_run(lock2s1).
+true .
+
+# definition of iterDoSomething is in examples/deadlock.pl
+?- has_infinite_run(iterDoSomething).
+true .
+
+# definition of oneUserSystem is in examples/deadlock.pl
+?- has_infinite_run(oneUserSystem).
+false.
+
+----------- Test cases on "deadlock_free" predicate -----------
+?- deadlock_free(a1 > a2 > a3).
+true .
+
+?- deadlock_free((a1 > a2) | a3).
+true .
+
+# definition of deadlockingSystem is in examples/deadlock.pl
+?- deadlock_free(deadlockingSystem).
+false.
+
+# definition of user1 is in examples/deadlock.pl
+?- deadlock_free(user1).
+true .
+
+# definition of user2 is in examples/deadlock.pl
+?- deadlock_free(user2).
+true .
+
+# definition of lock1s0 is in examples/deadlock.pl
+?- deadlock_free(lock1s0).
+true .
+
+# definition of lock1s1 is in examples/deadlock.pl
+?- deadlock_free(lock1s1).
+true.
+
+# definition of lock2s0 is in examples/deadlock.pl
+?- deadlock_free(lock2s0).
+true .
+
+# definition of lock2s1 is in examples/deadlock.pl
+?- deadlock_free(lock2s1).
+true.
+
+# definition of iterDoSomething is in examples/deadlock.pl
+?- deadlock_free(iterDoSomething).
+true.
+
+# definition of oneUserSystem is in examples/deadlock.pl
+?- deadlock_free(oneUserSystem).
+true .
+
+----------- Test cases on "cannot_occur" predicate -----------
+?- cannot_occur(a1 > a2, a3).
+true.
+
+?- cannot_occur(a1 > a2, a2).
+false.
+
+# definition of producerConsumerSyst is in examples/producer-consumer.pl
+# the output is false because the process producerConsumerSyst has an infinite execution and thus cannot determine if the action overflow will ever occur.
+?- cannot_occur(producerConsumerSyst, overflow).
+false.
+
+# definition of producerConsumerSystBuggy is in examples/producer-consumer.pl
+# the output is false because the process producerConsumerSystBuggy has an infinite execution and thus cannot determine if the action overflow will ever occur.
+?- cannot_occur(producerConsumerSystBuggy, overflow).
+false.
+
+?- cannot_occur((a1 ? a2) $ (a1 ? a3), a2).
+true .
+
+----------- Test cases on "whenever_eventually" predicate -----------
+?- whenever_eventually(a1 > a2 > a3, a1, a2).
+true.
+
+?- whenever_eventually(a1 > a2 > a3, a2, a3).
+true.
+
+?- whenever_eventually((a1 > a2) | a3, a3, a2).
+true ;
+true ;
+false.
+
+# definition of producerConsumerSyst is in examples/producer-consumer.pl
+# the output is false because the process producerConsumerSyst has an infinite execution and thus cannot determine if the action consume will eventually happen after produce.
+?- whenever_eventually(producerConsumerSyst, produce, consume).
+false.
+
+# definition of producerConsumerSystBuggy is in examples/producer-consumer.pl
+# the output is false because the process producerConsumerSystBuggy has an infinite execution and thus cannot determine if the action consume will eventually happen after produce.
+?- whenever_eventually(producerConsumerSystBuggy, overflow).
+false.
