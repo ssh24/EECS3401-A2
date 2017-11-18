@@ -55,15 +55,15 @@ run(P1 $ P2, R) :-
 % Finally it also prints the transition between P1-A-P2.
 
 print_run([P1,A,P2]) :-
-	write("P1 = "), writeln(P1),
-	write("A = "), writeln(A),
-	write("P2 = "), writeln(P2),
-	write("Transition = "), writeln(P1-A-P2).	% base-case: when there are only three elements in the execution list.
+	write("P1: "), writeln(P1),
+	write("A: "), writeln(A),
+	write("P2: "), writeln(P2),
+	write("Transition: "), writeln(P1-A-P2).	% base-case: when there are only three elements in the execution list.
 print_run([P1,A,P2|Rest]) :-
-	write("P1 = "), writeln(P1),
-	write("A = "), writeln(A),
-	write("P2 = "), writeln(P2),
-	write("Transition = "), writeln(P1-A-P2),
+	write("P1: "), writeln(P1),
+	write("A: "), writeln(A),
+	write("P2: "), writeln(P2),
+	write("Transition: "), writeln(P1-A-P2),
 	print_run([P2|Rest]).	% recursive-case: print P1, A and P2 and recursively call print_run([P2|Rest]). Note P2 is re-included on the list because it will be the starting process of the next transition.
 
 % --------------------- has_infinite_run(P) predicate --------------------------
@@ -82,11 +82,12 @@ has_infinite_run(P, Path) :-
 % deadlock_free(P) holds if and only if process P cannot reach a deadlocked configuration (i.e a configuration where the process is not final but cannot make any further transition).
 
 deadlock_free(P) :-
-	has_infinite_run(P), !, fail.	% base-case: if P has an infinite execution, it is not decidable if P is deadlock free.
+	P - _ - PR, not(final(PR)), not(PR - _ - _), !, fail.	% base-case: if there is a transition from P to PR and PR is not final and there is no more transition from PR, then P is not deadlock free by definition.
+
 deadlock_free(P) :-
-	P - _ - PR, final(PR).	% base-case: if P does not have an inifite execution, then check for a transition P-A-PR and check if PR is final. If it is, then it is deadlock free.
+	P - _ - PR, final(PR), !.	% base-case: if there is a transition from P to PR and PR is final, P is deadlock free.
 deadlock_free(P) :-
-	P - _ - PR, not(final(PR)), !, deadlock_free(PR).	% recursive-case: if P does not have an inifite execution, then check for a transition P-A-PR and if PR is not final then recursively check deadlock_free(PR).
+	P - _ - PR, deadlock_free(PR).	% recursive-case: if there is a transition from P to PR and PR is not final, recursively check if PR is deadlock free.
 
 % --------------------- cannot_occur(P, A) predicate ---------------------------
 % cannot_occur(P, A) holds if and only if there is no execution of process P where action A occurs.
@@ -104,12 +105,14 @@ cannot_occur(P, A) :-
 whenever_eventually(P, _, _) :-
 	has_infinite_run(P), !, fail.	% base-case: if P has an infinite execution, fail because it is not decidable if whenever A1 occurs in a transition from P, A2 occurs afterwards.
 whenever_eventually(P, A1, A2) :-
-	primAct(A1), primAct(A2), run(P, R), whenever_a_b(A1, A2, R).	% recursive-case: if P does not have an infinite execution, check if A1 and A2 are primitive actions and find an execution R for process P and check whenever A1 occurs, A2 occurs afterwards using the helper predicate whenever_a_b(A1, A2, R).
+	primAct(A1), primAct(A2), run(P, R), whenever_a_b(A1, A2, R).	% recursive-case: if P does not have an infinite execution, check if A1 and A2 are primitive actions and find an execution R for process P and check whenever A1 occurs, A2 occurs afterwards in R using the helper predicate whenever_a_b(A1, A2, R).
 
 % helper predicate whenever_a_b(A, B, R).
 % The predicate recursively checks that whenever A occurs in the list R, B is occurs afterwards in R as well.
 whenever_a_b(A, B, [A, B]).	% base-case:  if there is only two elements in the list and B is followed by A.
 whenever_a_b(A, B, [A|Rest]) :-
-	member(B, Rest), whenever_a_b(A, B, Rest).	% recursive-case: if A is the first element, check if B exists in the Rest of the list and recursively call whenever_a_b(A, B, Rest).
+	member(B, Rest), not(member(A, Rest)), !.	% recursive-case: if A is the first element and B is in Rest and A is not in Rest anymore return true.
+whenever_a_b(A, B, [A|Rest]) :-
+	member(B, Rest), member(A, Rest), whenever_a_b(A, B, Rest).	% recursive-case: if A is the first element, check if B exists in the Rest of the list along with A then recursively call whenever_a_b(A, B, Rest).
 whenever_a_b(A, B, [_|Rest]) :-
 	whenever_a_b(A, B, Rest).	% recursive-case: if A is not the first element of the list, recursively call whenever_a_b(A, B, Rest).
